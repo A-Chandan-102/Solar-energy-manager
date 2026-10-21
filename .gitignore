@@ -1,0 +1,9 @@
+# Simulation and synthesis outputs
+*.vcd
+*.vvp
+build/
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store

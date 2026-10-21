@@ -1,0 +1,20 @@
+# Solar Energy Manager: pre-synthesis and post-synthesis netlist generation
+# Run from the repository root with: yosys -Q -s scripts/yosys_flow.ys
+
+read_verilog -sv solar_energy_manager.v
+hierarchy -check -top solar_energy_manager
+
+# Pre-synthesis view: elaborate processes into muxes/registers, then simplify
+# obvious RTL-level logic without running the full synthesis flow.
+proc
+opt
+check
+write_verilog -noattr build/solar_energy_manager_pre_synth.v
+show -format dot -prefix build/solar_energy_manager_pre_synth solar_energy_manager
+
+# Post-synthesis view: run Yosys generic logic synthesis and optimization.
+synth -top solar_energy_manager
+check
+stat
+write_verilog -noattr build/solar_energy_manager_post_synth.v
+show -format dot -prefix build/solar_energy_manager_post_synth solar_energy_manager
