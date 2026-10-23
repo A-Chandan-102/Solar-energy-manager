@@ -1,1 +1,6 @@
 /physical/solar_energy_manager_top/runs/
+
+/.devcontainer/
+/scripts/
+/Makefile
+/a.out
