@@ -1,196 +1,257 @@
-# Solar-Powered Device Energy Manager (RTL to GDS)
+# Solar-Powered Device Energy Manager Using RTL Design
 
-![Solar-powered devices: street light, camera, fan, water pump, fountain, lantern and phone charger running off solar panels](Screenshots/banner.png)
+A synthesizable Verilog controller that manages simulated battery energy by selecting **normal**, **power-save**, and **critical** operating modes. Essential loads remain enabled in every mode, while nonessential loads are disabled outside normal mode. Solar charging is enabled whenever solar power is available and the simulated battery is not full.
 
-> **Where to find the files**
-> - **Build files** (simulation outputs: VCDs, simulation binaries, schematic): [`build/`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/build)
-> - **Physical design files** (OpenLane run results for `solar_energy_manager_top`): [`physical/solar_energy_manager_top/results`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/physical/solar_energy_manager_top/results)
+The design is taken all the way from **RTL to GDSII** using an open-source flow (Yosys, OpenLane/OpenROAD, Sky130).
 
-A synthesizable Verilog controller that manages simulated battery energy by choosing between **normal**, **power-save** and **critical** operating modes. It was verified in simulation and taken through the OpenLane 1.x flow on Sky130 inside a **100 x 100 um** die.
+![Project overview](docs/images/00_overview.png)
 
-> The battery level is a simulated 2-bit category, not a physical voltage sensor.
+---
 
-## Behaviour
+## Table of Contents
 
-| Signal | Meaning |
-|---|---|
-| `battery_level[1:0]` | `00` critical, `01` low, `10` medium, `11` high |
-| `solar_available` | `1` when usable solar power is available |
-| `operating_mode[1:0]` | `00` normal, `01` power-save, `10` critical |
-| `essential_load_enable` | Always `1` |
-| `nonessential_load_enable` | `1` only in normal mode |
-| `solar_charge_enable` | `1` when solar is available and the battery is not full |
+1. [Problem Statement](#problem-statement)
+2. [Design Overview](#design-overview)
+3. [The 13-Step RTL-to-GDS Flow](#the-13-step-rtl-to-gds-flow)
+4. [Repository Structure](#repository-structure)
+5. [How to Run](#how-to-run)
+6. [Results Summary](#results-summary)
+7. [Limitations and Future Work](#limitations-and-future-work)
+8. [Tools Used](#tools-used)
+9. [Author](#author)
 
-Reset is asynchronous and active-low (`rst_n`). The controller starts in **power-save** mode.
+---
 
-Mode transitions:
+## Problem Statement
 
-| From | Condition | To |
+Solar-powered devices need to manage limited energy efficiently. This project designs a simple digital controller that prioritizes essential functions when battery energy is low and restores normal operation when sufficient energy is available.
+
+---
+
+## Design Overview
+
+> The battery level is a **simulated 2-bit category**, not a physical voltage sensor.
+
+### Ports
+
+| Port | Direction | Width | Description |
+|---|---|---|---|
+| `clk` | input | 1 | System clock |
+| `rst_n` | input | 1 | Active-low asynchronous reset |
+| `battery_level` | input | 2 | `00` critical, `01` low, `10` medium, `11` high |
+| `solar_available` | input | 1 | `1` when usable solar power is available |
+| `operating_mode` | output | 2 | `00` normal, `01` power-save, `10` critical |
+| `essential_load_enable` | output | 1 | Always `1` in every mode |
+| `nonessential_load_enable` | output | 1 | `1` only in normal mode |
+| `solar_charge_enable` | output | 1 | `1` when solar is available and battery is not high |
+
+### Operating Modes
+
+| Mode | Encoding | Essential load | Nonessential load |
+|---|---|---|---|
+| Normal | `00` | ON | ON |
+| Power-save | `01` | ON | OFF |
+| Critical | `10` | ON | OFF |
+
+### State Transitions
+
+| Current mode | Condition | Next mode |
 |---|---|---|
 | Normal | battery critical | Critical |
 | Normal | battery low and no solar | Power-save |
 | Power-save | battery critical | Critical |
-| Power-save | battery medium or high, or (battery low and solar) | Normal |
+| Power-save | battery medium or high | Normal |
+| Power-save | battery low and solar available | Normal |
 | Critical | battery medium or high | Normal |
 | Critical | battery low | Power-save |
 
-## Two designs
+Reset starts the controller in **power-save** mode so nonessential loads stay disabled until the battery condition is known.
 
-| Design | File | Description |
-|---|---|---|
-| Core FSM | `solar_energy_manager.v` | The state machine above (about 22 cells in Yosys) |
-| Top wrapper | `solar_energy_manager_top.v` | Core FSM plus input conditioning and statistics |
-
-The wrapper adds:
-
-- 2-FF synchronizers on `battery_level` and `solar_available`
-- A debounce filter (inputs must be stable for `DEBOUNCE_CYCLES`, default 4)
-- A registered, glitch-free `solar_charge_enable`
-- Saturating time-in-mode counters for normal, power-save and critical (prescaled by 16, width `STAT_W`, default 8)
-- A sticky `critical_seen` flag
-- A `stat_sel` read mux and a `clear_stats` input
-
-**Only the top wrapper went through physical design.** All results below are for `solar_energy_manager_top`.
-
-## Repository layout
-
-```
-solar_energy_manager.v          Core FSM
-solar_energy_manager_top.v      Top-level wrapper (physical design target)
-tb_solar_energy_manager.v       Testbench for the core FSM
-tb_solar_energy_manager_top.v   Testbench for the top wrapper
-physical/
-  solar_energy_manager_top/
-    config.tcl                  OpenLane configuration
-    src/                        Verilog sources used by OpenLane
-  reports/                      Reports copied out of the OpenLane run
-  sync_in.sh                    Copy config and sources into OpenLane
-  sync_out.sh                   Copy a finished run out of OpenLane
-  make_report.py                Builds physical/reports/summary.md
+```mermaid
+stateDiagram-v2
+    [*] --> PowerSave: reset
+    Normal --> Critical: battery critical
+    Normal --> PowerSave: battery low and no solar
+    PowerSave --> Critical: battery critical
+    PowerSave --> Normal: battery medium/high, or low with solar
+    Critical --> Normal: battery medium/high
+    Critical --> PowerSave: battery low
 ```
 
-OpenLane itself is a separate repository and is not included here. The run folder (GDS, DEF, netlists) is not committed, so the committed reports and the summary are the record of the results.
+![FSM diagram](docs/images/01_fsm_diagram.png)
 
-## Simulation
+---
 
-Requires Icarus Verilog (`-g2012`, because the testbenches use `$fatal`).
+## The 13-Step RTL-to-GDS Flow
 
-Core FSM:
+```mermaid
+flowchart LR
+    A[1. RTL Design] --> B[2. Testbench] --> C[3. RTL Simulation] --> D[4. Synthesis]
+    D --> E[5. STA] --> F[6. Floorplan] --> G[7. Placement] --> H[8. CTS]
+    H --> I[9. Routing] --> J[10. RC Extraction] --> K[11. Post-layout STA]
+    K --> L[12. DRC + LVS] --> M[13. GDS]
+```
+
+### Step 1 — RTL Design
+
+The controller is written in synthesizable Verilog in `solar_energy_manager.v`. It uses a three-block structure: combinational next-state logic, a state register with asynchronous active-low reset, and combinational output-control logic. `solar_energy_manager_top.v` wraps the core for the physical flow.
+
+![RTL code](docs/images/02_rtl_code.png)
+
+### Step 2 — Testbench
+
+`tb_solar_energy_manager.v` (core) and `tb_solar_energy_manager_top.v` (top level) drive the design through reset, every battery level, and solar on/off combinations, so that all mode transitions are exercised.
+
+![Testbench code](docs/images/03_testbench_code.png)
+
+### Step 3 — RTL Simulation
+
+The design is simulated with Icarus Verilog and the waveforms are inspected in GTKWave. The checks confirm correct mode transitions, essential load always enabled, nonessential load enabled only in normal mode, and charging behaviour matching `solar_available` and `battery_level`.
+
+![Simulation console output](docs/images/04_simulation_output.png)
+![RTL waveform](docs/images/05_rtl_waveform.png)
+
+### Step 4 — Synthesis
+
+Yosys maps the RTL onto the Sky130 standard-cell library and produces the gate-level netlist `solar_energy_manager_top_netlist.v`. ABC performs technology mapping and optimization.
+
+![Yosys statistics](docs/images/06_yosys_stats.png)
+![Gate-level netlist](docs/images/07_netlist.png)
+![ABC results](docs/images/08_abc_results.png)
+
+### Step 5 — STA (Static Timing Analysis)
+
+Static timing analysis on the synthesized netlist checks setup and hold slack against the target clock constraint, before any layout exists.
+
+![Pre-layout STA report](docs/images/09_sta_report.png)
+
+### Step 6 — Floorplan
+
+The die and core area, I/O pin placement, and power distribution network (PDN) are defined.
+
+![Floorplan](docs/images/10_floorplan.png)
+
+### Step 7 — Placement
+
+Standard cells are placed in rows inside the core area, first globally and then legalized and refined.
+
+![Placement](docs/images/11_placement.png)
+
+### Step 8 — CTS (Clock Tree Synthesis)
+
+A clock tree is built to distribute `clk` to all flip-flops with minimal skew.
+
+![Clock tree](docs/images/12_cts.png)
+
+### Step 9 — Routing
+
+Global and detailed routing connect all placed cells using the Sky130 metal layers.
+
+![Routed layout](docs/images/13_routing.png)
+
+### Step 10 — RC Extraction
+
+Parasitic resistance and capacitance are extracted from the routed layout and written out as an SPEF file for accurate timing.
+
+![RC extraction](docs/images/14_rc_extraction.png)
+
+### Step 11 — Post-layout STA
+
+Timing is re-analysed with the extracted parasitics to confirm setup and hold are still met after routing.
+
+![Post-layout STA report](docs/images/15_post_layout_sta.png)
+
+### Step 12 — DRC + LVS
+
+- **DRC (Design Rule Check)** verifies the layout obeys Sky130 manufacturing rules.
+- **LVS (Layout vs. Schematic)** verifies the layout matches the synthesized netlist.
+
+![DRC result](docs/images/16_drc.png)
+![LVS result](docs/images/17_lvs.png)
+
+### Step 13 — GDS
+
+The final layout is exported as a GDSII file, the format handed to a foundry for fabrication.
+
+![Final GDS layout](docs/images/18_gds_final.png)
+
+---
+
+## Repository Structure
+
+```text
+Solar-energy-manager/
+├── .devcontainer/                      # Dev container setup
+├── OpenLane/                           # OpenLane configuration
+├── Sky130Tools/                        # Sky130 tool setup
+├── physical/                           # Physical design outputs
+├── scripts/                            # Helper scripts
+├── docs/images/                        # Screenshots used in this README
+├── solar_energy_manager.v              # Core RTL
+├── solar_energy_manager_top.v          # Top-level wrapper
+├── solar_energy_manager_top_netlist.v  # Synthesized gate-level netlist
+├── tb_solar_energy_manager.v           # Core testbench
+├── tb_solar_energy_manager_top.v       # Top-level testbench
+├── Makefile
+└── README.md
+```
+
+---
+
+## How to Run
+
+### RTL simulation
 
 ```bash
-iverilog -g2012 -o build/core_sim solar_energy_manager.v tb_solar_energy_manager.v
-vvp build/core_sim
+iverilog -o a.out solar_energy_manager.v tb_solar_energy_manager.v
+vvp a.out
 ```
 
-Top wrapper:
+If the testbench dumps a VCD file, view it with:
 
 ```bash
-iverilog -g2012 -o build/top_sim solar_energy_manager.v solar_energy_manager_top.v tb_solar_energy_manager_top.v
-vvp build/top_sim
+gtkwave <your_dump>.vcd
 ```
 
-A passing run prints a `PASS` line with the number of checks. Both testbenches write a VCD file into `build/`.
+### Physical design flow
 
-![Top-level simulation waveforms with both testbenches passing](Screenshots/_top%20waveforms.png)
+Steps 4 to 13 run through the OpenLane flow using the configuration in `OpenLane/` and the helpers in `scripts/` and the `Makefile`. Open the repository in the provided dev container to get the toolchain pre-configured.
 
-The top-level testbench holds every input change for 12 clocks, because the synchronizers, debounce and FSM register add about 8 clocks of latency. If you change `DEBOUNCE_CYCLES`, adjust `SETTLE_CYCLES` in the testbench to stay above the new latency.
+---
 
-## Synthesis
-
-Yosys with the Sky130 HD library:
-
-```bash
-LIB=<path to sky130_fd_sc_hd__tt_025C_1v80.lib>
-yosys -p "read_liberty -lib $LIB; read_verilog solar_energy_manager.v solar_energy_manager_top.v; synth -top solar_energy_manager_top; flatten; dfflibmap -liberty $LIB; abc -liberty $LIB; clean; stat -liberty $LIB"
-```
-
-Both Verilog files must be read, because the wrapper instantiates the core FSM.
-
-## Physical design flow
-
-| Item | Value |
-|---|---|
-| Flow | OpenLane 1.0.2 (Docker), interactive mode |
-| PDK | Sky130A, `sky130_fd_sc_hd` |
-| Die | 100 x 100 um (absolute) |
-| Clock | 20 ns on `clk` |
-| Placement density target | 0.45 |
-| Power grid | Custom `FP_PDN_*` pitch and offsets (25 / 5 um) for the small die, `met4` maximum routing layer |
-
-Steps run, in order:
-
-```tcl
-prep -design solar_energy_manager_top -tag run1 -overwrite
-run_synthesis
-run_floorplan
-run_placement
-run_cts
-run_routing
-run_parasitics_sta
-run_magic
-run_magic_spice_export
-run_magic_drc
-run_lvs
-run_antenna_check
-```
-
-![Final placed and routed layout of solar_energy_manager_top in KLayout](Screenshots/KLayout%20image%20of%20placed%20and%20routed.png)
-*Final placed and routed layout in KLayout (Sky130, 100 x 100 um die).*
-
-To reproduce: clone OpenLane next to this repository and place this project in its `designs/` folder (`physical/sync_in.sh` does the copy), run `make mount`, then `./flow.tcl -interactive` and the commands above. After leaving the container, `physical/sync_out.sh run1` copies the run out, and `python3 physical/make_report.py run1` builds the summary.
-
-## Results (run `run1`)
-
-All numbers come from `physical/reports/summary.md`.
-
-### Area
+## Results Summary
 
 | Metric | Value |
 |---|---|
-| Synthesized cells | 213 |
-| Synthesized cell area | 2,579.97 um^2 |
-| Die area | 10,000 um^2 (100 x 100 um) |
-| Core area | 6,761.5 um^2 |
-| Utilization | 38.2% |
+| Cell count after synthesis | _from Yosys statistics (Step 4)_ |
+| Setup slack (pre-layout) | _from Step 5 report_ |
+| Setup / hold slack (post-layout) | _from Step 11 report_ |
+| DRC violations | _from Step 12_ |
+| LVS | _from Step 12_ |
+| Final output | GDSII (Step 13) |
 
-Utilization is synthesized cell area divided by core area. It excludes tap, decap and fill cells added later. Yosys and OpenLane map the design slightly differently, so their cell counts and areas differ (an earlier Yosys-only run gave about 2,044 um^2).
+---
 
-### Timing, all corners (ns)
+## Limitations and Future Work
 
-The RC corner is the wire-parasitic extraction corner (min, nom, max). The library corner is slow (ss), typical (tt) or fast (ff). Each value is the worst slack over all reported paths for that corner.
+- Battery level is a simulated 2-bit category, not a real ADC or voltage reading.
+- Only three operating modes are supported.
+- Possible extensions: hysteresis or debounce on battery level, more load priority tiers, a real ADC interface, and multi-corner timing sign-off.
 
-| RC corner | Library corner | Setup worst slack | Hold worst slack | Violated paths | Result |
-|---|---|---|---|---|---|
-| min | ss_100C_1v60 | 9.36 | 0.74 | 0 | PASS |
-| min | tt_025C_1v80 | 10.48 | 0.23 | 0 | PASS |
-| min | ff_n40C_1v95 | 10.98 | 0.06 | 0 | PASS |
-| nom | ss_100C_1v60 | 9.32 | 0.74 | 0 | PASS |
-| nom | tt_025C_1v80 | 10.46 | 0.23 | 0 | PASS |
-| nom | ff_n40C_1v95 | 10.96 | 0.06 | 0 | PASS |
-| max | ss_100C_1v60 | 9.27 | 0.75 | 0 | PASS |
-| max | tt_025C_1v80 | 10.44 | 0.24 | 0 | PASS |
-| max | ff_n40C_1v95 | 10.95 | 0.06 | 0 | PASS |
+---
 
-![Multi-corner timing results, all corners passing](Screenshots/multicorner%20timing.png)
+## Tools Used
 
-- Setup is worst at the slow corner and hold is worst at the fast corner, as expected.
-- The 20 ns clock is very relaxed for this logic, so these numbers do not show the maximum achievable frequency.
-- Hold slack at the fast corner is positive but small (0.06 ns).
-
-### Signoff
-
-| Check | Result |
+| Purpose | Tool |
 |---|---|
-| DRC (router and Magic) | 0 violations |
-| LVS | No net, device, pin or property mismatches; total errors = 0 |
-| Antenna | No violators |
+| RTL simulation | Icarus Verilog, GTKWave |
+| Synthesis | Yosys, ABC |
+| Place and route, STA | OpenLane / OpenROAD |
+| PDK | SkyWater Sky130 |
+| DRC / LVS | Magic, Netgen |
 
-## Limitations
+---
 
-- Battery level and solar availability are simulated inputs, not sensor interfaces.
-- No power analysis, IR-drop analysis, gate-level simulation, formal verification or tape-out was performed.
-- The `STAT_W` counter width and `DEBOUNCE_CYCLES` are the main levers for trading features against area.
+## Author
 
-## Notes on the flow
-
-An early attempt at floorplanning failed because `prep` was started without a synthesis netlist. This was a flow usage mistake, not a design issue. Restarting with a fresh run tag and running synthesis first fixed it.
+**A. Chandan**, B.Tech ECE, Anurag University
