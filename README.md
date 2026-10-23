@@ -1,10 +1,12 @@
+<p align="center">
+  <img src="Screenshots/banner.png" alt="Solar-Powered Device Energy Manager banner" width="100%">
+</p>
+
 # Solar-Powered Device Energy Manager Using RTL Design
 
 A synthesizable Verilog controller that manages simulated battery energy by selecting **normal**, **power-save**, and **critical** operating modes. Essential loads remain enabled in every mode, while nonessential loads are disabled outside normal mode. Solar charging is enabled whenever solar power is available and the simulated battery is not full.
 
-The design is taken all the way from **RTL to GDSII** using an open-source flow (Yosys, OpenLane/OpenROAD, Sky130).
-
-![Project overview](docs/images/00_overview.png)
+The design is taken all the way from **RTL to GDSII** using an open-source flow (Yosys, OpenLane/OpenROAD, Sky130, Magic).
 
 ---
 
@@ -12,13 +14,14 @@ The design is taken all the way from **RTL to GDSII** using an open-source flow 
 
 1. [Problem Statement](#problem-statement)
 2. [Design Overview](#design-overview)
-3. [The 13-Step RTL-to-GDS Flow](#the-13-step-rtl-to-gds-flow)
-4. [Repository Structure](#repository-structure)
-5. [How to Run](#how-to-run)
-6. [Results Summary](#results-summary)
-7. [Limitations and Future Work](#limitations-and-future-work)
-8. [Tools Used](#tools-used)
-9. [Author](#author)
+3. [Why Both a Core File and a `_top` File](#why-both-a-core-file-and-a-_top-file)
+4. [The 13-Step RTL-to-GDS Flow](#the-13-step-rtl-to-gds-flow)
+5. [Repository Structure](#repository-structure)
+6. [How to Run](#how-to-run)
+7. [Results Summary](#results-summary)
+8. [Limitations and Future Work](#limitations-and-future-work)
+9. [Tools Used](#tools-used)
+10. [Author](#author)
 
 ---
 
@@ -31,6 +34,8 @@ Solar-powered devices need to manage limited energy efficiently. This project de
 ## Design Overview
 
 > The battery level is a **simulated 2-bit category**, not a physical voltage sensor.
+
+![Graphical representation of the design](Screenshots/Graphical%20representation.png)
 
 ### Ports
 
@@ -78,11 +83,33 @@ stateDiagram-v2
     Critical --> PowerSave: battery low
 ```
 
-![FSM diagram](docs/images/01_fsm_diagram.png)
+---
+
+## Why Both a Core File and a `_top` File
+
+The repository contains two parallel sets of files:
+
+| Role | Core design | Top-level wrapper |
+|---|---|---|
+| RTL | `solar_energy_manager.v` | `solar_energy_manager_top.v` |
+| Testbench | `tb_solar_energy_manager.v` | `tb_solar_energy_manager_top.v` |
+| Gate-level netlist | n/a | `solar_energy_manager_top_netlist.v` |
+
+The core module holds the controller logic (the FSM and the output logic). The `_top` module instantiates the core and acts as the **chip-level boundary**. They are kept separate for these reasons:
+
+1. **Separation of function from physical integration.** The core is pure behaviour and is verified on its own. The top module is what the physical flow treats as the design: it fixes the pin list, the design name used by synthesis and OpenLane, and the boundary of the die.
+2. **Hierarchy before flattening.** Synthesis sees a two-level hierarchy (top, with the core inside). The flow then flattens and cleans it into a single module. The screenshots *Both design hierarchy stats* and *flattened and cleaned stats* show this before and after.
+3. **Two levels of verification.** `tb_solar_energy_manager.v` proves the logic is correct in isolation. `tb_solar_energy_manager_top.v` proves the wrapped design behaves identically through the final interface, and the same top-level testbench can be reused against the synthesized netlist to check that synthesis preserved behaviour.
+4. **Room to grow without re-verifying the core.** Interface-level additions (for example input synchronizers, pad-related logic, or extra ports for the physical flow) go in the top module. The verified controller logic stays untouched.
+5. **Clean naming through the flow.** Every later artifact (netlist, floorplan, placement, routing, GDS) belongs to the top-level module, so results map directly to one design name.
+
+![Both design hierarchy stats](Screenshots/Both%20design%20heirarchy%20stats.png)
 
 ---
 
 ## The 13-Step RTL-to-GDS Flow
+
+![13-step flow](Screenshots/flow.jpeg)
 
 ```mermaid
 flowchart LR
@@ -92,88 +119,105 @@ flowchart LR
     K --> L[12. DRC + LVS] --> M[13. GDS]
 ```
 
-### Step 1 — RTL Design
+### Step 1: RTL Design
 
-The controller is written in synthesizable Verilog in `solar_energy_manager.v`. It uses a three-block structure: combinational next-state logic, a state register with asynchronous active-low reset, and combinational output-control logic. `solar_energy_manager_top.v` wraps the core for the physical flow.
+The controller is written in synthesizable Verilog in `solar_energy_manager.v`. It uses three blocks: combinational next-state logic, a state register with asynchronous active-low reset, and combinational output-control logic. `solar_energy_manager_top.v` wraps the core for the physical flow.
 
-![RTL code](docs/images/02_rtl_code.png)
+![RTL code](Screenshots/RTL%20code.png)
 
-### Step 2 — Testbench
+### Step 2: Testbench
 
-`tb_solar_energy_manager.v` (core) and `tb_solar_energy_manager_top.v` (top level) drive the design through reset, every battery level, and solar on/off combinations, so that all mode transitions are exercised.
+`tb_solar_energy_manager.v` (core) and `tb_solar_energy_manager_top.v` (top level) drive the design through reset, the battery levels and solar on/off combinations so the mode transitions are exercised.
 
-![Testbench code](docs/images/03_testbench_code.png)
+![Testbench code](Screenshots/tb_code.png)
 
-### Step 3 — RTL Simulation
+### Step 3: RTL Simulation
 
-The design is simulated with Icarus Verilog and the waveforms are inspected in GTKWave. The checks confirm correct mode transitions, essential load always enabled, nonessential load enabled only in normal mode, and charging behaviour matching `solar_available` and `battery_level`.
+The design is simulated with Icarus Verilog and the waveforms are inspected in GTKWave. The checks confirm correct mode transitions, essential load always enabled, nonessential load enabled only in normal mode, and charging matching `solar_available` and `battery_level`.
 
-![Simulation console output](docs/images/04_simulation_output.png)
-![RTL waveform](docs/images/05_rtl_waveform.png)
+**Core design**
 
-### Step 4 — Synthesis
+![First waveform](Screenshots/first%20waveform.png)
+![First DUT waveform](Screenshots/first%20dut%20waveform.png)
 
-Yosys maps the RTL onto the Sky130 standard-cell library and produces the gate-level netlist `solar_energy_manager_top_netlist.v`. ABC performs technology mapping and optimization.
+**Top-level design**
 
-![Yosys statistics](docs/images/06_yosys_stats.png)
-![Gate-level netlist](docs/images/07_netlist.png)
-![ABC results](docs/images/08_abc_results.png)
+![Top waveforms](Screenshots/_top%20waveforms.png)
+![Top DUT waveform](Screenshots/_top%20dut%20waveform.png)
 
-### Step 5 — STA (Static Timing Analysis)
+### Step 4: Synthesis
 
-Static timing analysis on the synthesized netlist checks setup and hold slack against the target clock constraint, before any layout exists.
+Yosys maps the RTL onto the Sky130 standard-cell library and produces the gate-level netlist `solar_energy_manager_top_netlist.v`. ABC performs technology mapping and optimization. The design is synthesized first as a hierarchy, then flattened and cleaned.
 
-![Pre-layout STA report](docs/images/09_sta_report.png)
+**Synthesis statistics**
 
-### Step 6 — Floorplan
+![First file stats](Screenshots/first%20file%20stats.png)
+![Top stats](Screenshots/_top%20stats.png)
+![Flattened and cleaned stats](Screenshots/flattened%20and%20cleaned%20stats.png)
 
-The die and core area, I/O pin placement, and power distribution network (PDN) are defined.
+**ABC results**
 
-![Floorplan](docs/images/10_floorplan.png)
+![ABC results](Screenshots/abc%20results.png)
 
-### Step 7 — Placement
+**Synthesized netlist**
+
+![Synthesised netlist](Screenshots/Synthesised%20netlist.png)
+![Netlist](Screenshots/netlist%20png.png)
+![Netlist zoomed](Screenshots/netlist%20png%20zoomed.png)
+
+### Step 5: STA (Static Timing Analysis)
+
+Static timing analysis on the synthesized netlist checks setup and hold slack against the clock constraint, before any layout exists.
+
+![run_sta](Screenshots/run_sta.png)
+![STA analysis](Screenshots/sta%20analysis.png)
+![Multi-corner timing](Screenshots/multicorner%20timing.png)
+
+### Step 6: Floorplan
+
+The die and core area, I/O pin placement and power distribution network are defined.
+
+![run_synth and run_floorplan](Screenshots/run_synth%20and%20run_floorplan.png)
+![Floorplan](Screenshots/Floorplan.png)
+
+### Step 7: Placement
 
 Standard cells are placed in rows inside the core area, first globally and then legalized and refined.
 
-![Placement](docs/images/11_placement.png)
+![Placement](Screenshots/Placement.png)
 
-### Step 8 — CTS (Clock Tree Synthesis)
+### Step 8: CTS (Clock Tree Synthesis)
 
 A clock tree is built to distribute `clk` to all flip-flops with minimal skew.
 
-![Clock tree](docs/images/12_cts.png)
+![Placement, CTS and routing](Screenshots/placement,%20cts%20and%20routing.png)
 
-### Step 9 — Routing
+### Step 9: Routing
 
 Global and detailed routing connect all placed cells using the Sky130 metal layers.
 
-![Routed layout](docs/images/13_routing.png)
+![Routing](Screenshots/Routing.png)
 
-### Step 10 — RC Extraction
+### Step 10: RC Extraction
 
 Parasitic resistance and capacitance are extracted from the routed layout and written out as an SPEF file for accurate timing.
 
-![RC extraction](docs/images/14_rc_extraction.png)
-
-### Step 11 — Post-layout STA
+### Step 11: Post-layout STA
 
 Timing is re-analysed with the extracted parasitics to confirm setup and hold are still met after routing.
 
-![Post-layout STA report](docs/images/15_post_layout_sta.png)
-
-### Step 12 — DRC + LVS
+### Step 12: DRC + LVS
 
 - **DRC (Design Rule Check)** verifies the layout obeys Sky130 manufacturing rules.
 - **LVS (Layout vs. Schematic)** verifies the layout matches the synthesized netlist.
 
-![DRC result](docs/images/16_drc.png)
-![LVS result](docs/images/17_lvs.png)
+![All Magic commands](Screenshots/All%20magic%20commands.png)
 
-### Step 13 — GDS
+### Step 13: GDS
 
 The final layout is exported as a GDSII file, the format handed to a foundry for fabrication.
 
-![Final GDS layout](docs/images/18_gds_final.png)
+![Final GDS](Screenshots/Final%20GLLS.png)
 
 ---
 
@@ -181,18 +225,17 @@ The final layout is exported as a GDSII file, the format handed to a foundry for
 
 ```text
 Solar-energy-manager/
-├── .devcontainer/                      # Dev container setup
 ├── OpenLane/                           # OpenLane configuration
+├── Screenshots/                        # Images used in this README
 ├── Sky130Tools/                        # Sky130 tool setup
+├── build/                              # Build outputs
 ├── physical/                           # Physical design outputs
-├── scripts/                            # Helper scripts
-├── docs/images/                        # Screenshots used in this README
 ├── solar_energy_manager.v              # Core RTL
 ├── solar_energy_manager_top.v          # Top-level wrapper
 ├── solar_energy_manager_top_netlist.v  # Synthesized gate-level netlist
 ├── tb_solar_energy_manager.v           # Core testbench
 ├── tb_solar_energy_manager_top.v       # Top-level testbench
-├── Makefile
+├── .gitignore
 └── README.md
 ```
 
@@ -203,19 +246,20 @@ Solar-energy-manager/
 ### RTL simulation
 
 ```bash
-iverilog -o a.out solar_energy_manager.v tb_solar_energy_manager.v
-vvp a.out
+# Core design
+iverilog -o core.out solar_energy_manager.v tb_solar_energy_manager.v
+vvp core.out
+
+# Top-level design
+iverilog -o top.out solar_energy_manager.v solar_energy_manager_top.v tb_solar_energy_manager_top.v
+vvp top.out
 ```
 
-If the testbench dumps a VCD file, view it with:
-
-```bash
-gtkwave <your_dump>.vcd
-```
+If a testbench dumps a VCD file, view it with `gtkwave <your_dump>.vcd`.
 
 ### Physical design flow
 
-Steps 4 to 13 run through the OpenLane flow using the configuration in `OpenLane/` and the helpers in `scripts/` and the `Makefile`. Open the repository in the provided dev container to get the toolchain pre-configured.
+Steps 4 to 13 run through the synthesis, floorplan, STA and Magic scripts shown in the screenshots (`run_synth`, `run_floorplan`, `run_sta`), using the configuration in `OpenLane/` and `physical/`.
 
 ---
 
@@ -223,11 +267,10 @@ Steps 4 to 13 run through the OpenLane flow using the configuration in `OpenLane
 
 | Metric | Value |
 |---|---|
-| Cell count after synthesis | _from Yosys statistics (Step 4)_ |
-| Setup slack (pre-layout) | _from Step 5 report_ |
-| Setup / hold slack (post-layout) | _from Step 11 report_ |
-| DRC violations | _from Step 12_ |
-| LVS | _from Step 12_ |
+| Cell count after synthesis | _from the Step 4 statistics screenshots_ |
+| Timing (pre-layout) | _from the Step 5 reports_ |
+| Timing (post-layout) | _from Step 11_ |
+| DRC / LVS | _from Step 12_ |
 | Final output | GDSII (Step 13) |
 
 ---
@@ -236,7 +279,7 @@ Steps 4 to 13 run through the OpenLane flow using the configuration in `OpenLane
 
 - Battery level is a simulated 2-bit category, not a real ADC or voltage reading.
 - Only three operating modes are supported.
-- Possible extensions: hysteresis or debounce on battery level, more load priority tiers, a real ADC interface, and multi-corner timing sign-off.
+- Possible extensions: hysteresis or debounce on battery level, more load priority tiers, a real ADC interface, and wider multi-corner timing sign-off.
 
 ---
 
@@ -248,7 +291,7 @@ Steps 4 to 13 run through the OpenLane flow using the configuration in `OpenLane
 | Synthesis | Yosys, ABC |
 | Place and route, STA | OpenLane / OpenROAD |
 | PDK | SkyWater Sky130 |
-| DRC / LVS | Magic, Netgen |
+| DRC / LVS / GDS | Magic, Netgen |
 
 ---
 
