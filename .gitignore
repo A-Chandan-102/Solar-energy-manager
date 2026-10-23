@@ -7,3 +7,5 @@ build/
 *.log
 *.tmp
 .DS_Store
+OpenLane/
+physical/*/runs/
