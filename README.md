@@ -1,5 +1,23 @@
-
 # Solar-Powered Device Energy Manager (RTL to GDS)
+
+<p align="center">
+  <img src="Screenshots/KLayout%20image%20of%20placed%20and%20routed.png" alt="KLayout view of the placed and routed solar_energy_manager_top design (100 x 100 um, Sky130)" width="90%">
+  <br>
+  <em>Final placed and routed layout of <code>solar_energy_manager_top</code> in KLayout (Sky130, 100 x 100 um die)</em>
+</p>
+
+<p align="center">
+  <img src="Screenshots/_top%20waveforms.png" alt="Top-level simulation waveforms and passing testbench output" width="48%">
+  <img src="Screenshots/multicorner%20timing.png" alt="Multi-corner timing results, all corners passing" width="48%">
+  <br>
+  <em>Left: top-level simulation waveforms with both testbenches passing. Right: multi-corner timing, all 9 corners pass.</em>
+</p>
+
+> **Where to find the files**
+> - **Build files** (simulation outputs: VCDs, simulation binaries, schematic): [`build/`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/build)
+> - **Physical design files** (OpenLane run results for `solar_energy_manager_top`): [`physical/solar_energy_manager_top/results`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/physical/solar_energy_manager_top/results)
+>
+> More screenshots of the flow are in the [`Screenshots/`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/Screenshots) folder.
 
 A synthesizable Verilog controller that manages simulated battery energy by choosing between **normal**, **power-save** and **critical** operating modes. It was verified in simulation and taken through the OpenLane 1.x flow on Sky130 inside a **100 x 100 um** die.
 
