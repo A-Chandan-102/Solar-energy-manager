@@ -1,23 +1,10 @@
 # Solar-Powered Device Energy Manager (RTL to GDS)
 
-<p align="center">
-  <img src="Screenshots/KLayout%20image%20of%20placed%20and%20routed.png" alt="KLayout view of the placed and routed solar_energy_manager_top design (100 x 100 um, Sky130)" width="90%">
-  <br>
-  <em>Final placed and routed layout of <code>solar_energy_manager_top</code> in KLayout (Sky130, 100 x 100 um die)</em>
-</p>
-
-<p align="center">
-  <img src="Screenshots/_top%20waveforms.png" alt="Top-level simulation waveforms and passing testbench output" width="48%">
-  <img src="Screenshots/multicorner%20timing.png" alt="Multi-corner timing results, all corners passing" width="48%">
-  <br>
-  <em>Left: top-level simulation waveforms with both testbenches passing. Right: multi-corner timing, all 9 corners pass.</em>
-</p>
+![Solar-powered devices: street light, camera, fan, water pump, fountain, lantern and phone charger running off solar panels](Screenshots/banner.png)
 
 > **Where to find the files**
 > - **Build files** (simulation outputs: VCDs, simulation binaries, schematic): [`build/`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/build)
 > - **Physical design files** (OpenLane run results for `solar_energy_manager_top`): [`physical/solar_energy_manager_top/results`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/physical/solar_energy_manager_top/results)
->
-> More screenshots of the flow are in the [`Screenshots/`](https://github.com/A-Chandan-102/Solar-energy-manager/tree/main/Screenshots) folder.
 
 A synthesizable Verilog controller that manages simulated battery energy by choosing between **normal**, **power-save** and **critical** operating modes. It was verified in simulation and taken through the OpenLane 1.x flow on Sky130 inside a **100 x 100 um** die.
 
@@ -104,6 +91,8 @@ vvp build/top_sim
 
 A passing run prints a `PASS` line with the number of checks. Both testbenches write a VCD file into `build/`.
 
+![Top-level simulation waveforms with both testbenches passing](Screenshots/_top%20waveforms.png)
+
 The top-level testbench holds every input change for 12 clocks, because the synchronizers, debounce and FSM register add about 8 clocks of latency. If you change `DEBOUNCE_CYCLES`, adjust `SETTLE_CYCLES` in the testbench to stay above the new latency.
 
 ## Synthesis
@@ -145,6 +134,9 @@ run_lvs
 run_antenna_check
 ```
 
+![Final placed and routed layout of solar_energy_manager_top in KLayout](Screenshots/KLayout%20image%20of%20placed%20and%20routed.png)
+*Final placed and routed layout in KLayout (Sky130, 100 x 100 um die).*
+
 To reproduce: clone OpenLane next to this repository and place this project in its `designs/` folder (`physical/sync_in.sh` does the copy), run `make mount`, then `./flow.tcl -interactive` and the commands above. After leaving the container, `physical/sync_out.sh run1` copies the run out, and `python3 physical/make_report.py run1` builds the summary.
 
 ## Results (run `run1`)
@@ -178,6 +170,8 @@ The RC corner is the wire-parasitic extraction corner (min, nom, max). The libra
 | max | ss_100C_1v60 | 9.27 | 0.75 | 0 | PASS |
 | max | tt_025C_1v80 | 10.44 | 0.24 | 0 | PASS |
 | max | ff_n40C_1v95 | 10.95 | 0.06 | 0 | PASS |
+
+![Multi-corner timing results, all corners passing](Screenshots/multicorner%20timing.png)
 
 - Setup is worst at the slow corner and hold is worst at the fast corner, as expected.
 - The 20 ns clock is very relaxed for this logic, so these numbers do not show the maximum achievable frequency.
