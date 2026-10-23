@@ -1,6 +1,0 @@
-<< properties >>
-string FIXED_BBOX 0 0 20000 20000
-string GDS_END 1083232
-string GDS_FILE /openlane/designs/solar_energy_manager_top/runs/run1/results/signoff/solar_energy_manager_top.magic.gds
-string GDS_START 392768
-<< end >>
