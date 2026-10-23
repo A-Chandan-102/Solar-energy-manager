@@ -109,8 +109,6 @@ The core module holds the controller logic (the FSM and the output logic). The `
 
 ## The 13-Step RTL-to-GDS Flow
 
-![13-step flow](Screenshots/flow.jpeg)
-
 ```mermaid
 flowchart LR
     A[1. RTL Design] --> B[2. Testbench] --> C[3. RTL Simulation] --> D[4. Synthesis]
