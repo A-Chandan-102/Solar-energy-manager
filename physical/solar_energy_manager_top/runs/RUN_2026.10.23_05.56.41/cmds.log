@@ -1,0 +1,34 @@
+Fri Oct 23 05:56:43 UTC 2026 - Executing "openroad -exit -no_init -python /openlane/scripts/odbpy/lefutil.py get_metal_layers -o /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/layers.list /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+
+Fri Oct 23 05:56:49 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/merged.nom.lef -i /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef {/home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef} |& tee /dev/null"
+
+Fri Oct 23 05:56:49 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/merged.min.lef -i /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__min.tlef {/home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef} |& tee /dev/null"
+
+Fri Oct 23 05:56:49 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/merged.max.lef -i /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__max.tlef {/home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef} |& tee /dev/null"
+
+Fri Oct 23 05:56:50 UTC 2026 - Executing "python3 /openlane/scripts/mergeLib.py --output /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/merged.lib --name sky130A_merged /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+
+Fri Oct 23 05:56:51 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/trimmed.lib.exclude.list --output /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/trimmed.lib /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/merged.lib"
+
+Fri Oct 23 05:56:51 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts.lib.exclude.list --output /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts.lib /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+
+Fri Oct 23 05:56:52 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts-fastest.lib.exclude.list --output /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts-fastest.lib /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib"
+
+Fri Oct 23 05:56:53 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts-slowest.lib.exclude.list --output /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/cts/cts-slowest.lib /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib"
+
+Fri Oct 23 05:56:54 UTC 2026 - Executing "python3 /openlane/scripts/new_tracks.py -i /home/vscode/.ciel/sky130A/libs.tech/openlane/sky130_fd_sc_hd/tracks.info -o /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/routing/config.tracks"
+
+Fri Oct 23 05:56:54 UTC 2026 - Executing "echo {OpenLane ff5509f65b17bfa4068d5336495ab1718987ff69} > /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/OPENLANE_COMMIT"
+
+Fri Oct 23 05:58:37 UTC 2026 - Executing "sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} /home/vscode/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib > /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/1-sky130_fd_sc_hd__tt_025C_1v80.no_pg.lib"
+
+Fri Oct 23 05:58:37 UTC 2026 - Executing "sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/trimmed.lib > /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/tmp/synthesis/1-trimmed.no_pg.lib"
+
+Fri Oct 23 05:58:37 UTC 2026 - Executing "yosys -c /openlane/scripts/yosys/synth.tcl |& tee /dev/null /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/logs/synthesis/1-synthesis.log"
+
+Fri Oct 23 05:58:40 UTC 2026 - Executing "sed -i.bak -e {s/\(set ::env(CURRENT_NETLIST)\).*/\1 \/openlane\/designs\/solar_energy_manager_top\/runs\/RUN_2026.10.23_05.56.41\/results\/synthesis\/solar_energy_manager_top.v/} /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/config.tcl"
+
+Fri Oct 23 05:58:40 UTC 2026 - Executing "sed -i.bak /defparam/d /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/results/synthesis/solar_energy_manager_top.v"
+
+Fri Oct 23 05:58:40 UTC 2026 - Executing "sta -exit -no_init /openlane/scripts/openroad/sta/multi_corner.tcl |& tee /dev/null /openlane/designs/solar_energy_manager_top/runs/RUN_2026.10.23_05.56.41/logs/synthesis/2-sta.log"
+

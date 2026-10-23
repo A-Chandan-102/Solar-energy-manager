@@ -1,0 +1,289 @@
+VERSION 5.7 ;
+  NOWIREEXTENSIONATPIN ON ;
+  DIVIDERCHAR "/" ;
+  BUSBITCHARS "[]" ;
+MACRO solar_energy_manager_top
+  CLASS BLOCK ;
+  FOREIGN solar_energy_manager_top ;
+  ORIGIN 0.000 0.000 ;
+  SIZE 100.000 BY 100.000 ;
+  PIN VGND
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met4 ;
+        RECT 22.220 10.640 23.820 87.280 ;
+    END
+    PORT
+      LAYER met4 ;
+        RECT 47.220 10.640 48.820 87.280 ;
+    END
+    PORT
+      LAYER met4 ;
+        RECT 72.220 10.640 73.820 87.280 ;
+    END
+  END VGND
+  PIN VPWR
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met4 ;
+        RECT 9.720 10.640 11.320 87.280 ;
+    END
+    PORT
+      LAYER met4 ;
+        RECT 34.720 10.640 36.320 87.280 ;
+    END
+    PORT
+      LAYER met4 ;
+        RECT 59.720 10.640 61.320 87.280 ;
+    END
+    PORT
+      LAYER met4 ;
+        RECT 84.720 10.640 86.320 87.280 ;
+    END
+  END VPWR
+  PIN battery_level[0]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.196500 ;
+    PORT
+      LAYER met2 ;
+        RECT 80.590 96.000 80.870 100.000 ;
+    END
+  END battery_level[0]
+  PIN battery_level[1]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.196500 ;
+    PORT
+      LAYER met2 ;
+        RECT 45.170 96.000 45.450 100.000 ;
+    END
+  END battery_level[1]
+  PIN clear_stats
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.213000 ;
+    PORT
+      LAYER met3 ;
+        RECT 96.000 81.640 100.000 82.240 ;
+    END
+  END clear_stats
+  PIN clk
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.852000 ;
+    PORT
+      LAYER met3 ;
+        RECT 96.000 23.840 100.000 24.440 ;
+    END
+  END clk
+  PIN critical_seen
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 25.850 96.000 26.130 100.000 ;
+    END
+  END critical_seen
+  PIN essential_load_enable
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    PORT
+      LAYER met3 ;
+        RECT 0.000 74.840 4.000 75.440 ;
+    END
+  END essential_load_enable
+  PIN nonessential_load_enable
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met3 ;
+        RECT 0.000 37.440 4.000 38.040 ;
+    END
+  END nonessential_load_enable
+  PIN operating_mode[0]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.445500 ;
+    PORT
+      LAYER met3 ;
+        RECT 96.000 6.840 100.000 7.440 ;
+    END
+  END operating_mode[0]
+  PIN operating_mode[1]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 70.930 0.000 71.210 4.000 ;
+    END
+  END operating_mode[1]
+  PIN rst_n
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.196500 ;
+    PORT
+      LAYER met2 ;
+        RECT 0.090 0.000 0.370 4.000 ;
+    END
+  END rst_n
+  PIN solar_available
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.196500 ;
+    PORT
+      LAYER met2 ;
+        RECT 96.690 96.000 96.970 100.000 ;
+    END
+  END solar_available
+  PIN solar_charge_enable
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 16.190 0.000 16.470 4.000 ;
+    END
+  END solar_charge_enable
+  PIN stat_out[0]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 87.030 0.000 87.310 4.000 ;
+    END
+  END stat_out[0]
+  PIN stat_out[1]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 35.510 0.000 35.790 4.000 ;
+    END
+  END stat_out[1]
+  PIN stat_out[2]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met3 ;
+        RECT 0.000 17.040 4.000 17.640 ;
+    END
+  END stat_out[2]
+  PIN stat_out[3]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met3 ;
+        RECT 96.000 61.240 100.000 61.840 ;
+    END
+  END stat_out[3]
+  PIN stat_out[4]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met3 ;
+        RECT 0.000 91.840 4.000 92.440 ;
+    END
+  END stat_out[4]
+  PIN stat_out[5]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 61.270 96.000 61.550 100.000 ;
+    END
+  END stat_out[5]
+  PIN stat_out[6]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met2 ;
+        RECT 51.610 0.000 51.890 4.000 ;
+    END
+  END stat_out[6]
+  PIN stat_out[7]
+    DIRECTION OUTPUT TRISTATE ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.795200 ;
+    PORT
+      LAYER met3 ;
+        RECT 0.000 54.440 4.000 55.040 ;
+    END
+  END stat_out[7]
+  PIN stat_sel[0]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.196500 ;
+    PORT
+      LAYER met2 ;
+        RECT 9.750 96.000 10.030 100.000 ;
+    END
+  END stat_sel[0]
+  PIN stat_sel[1]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.159000 ;
+    PORT
+      LAYER met3 ;
+        RECT 96.000 44.240 100.000 44.840 ;
+    END
+  END stat_sel[1]
+  OBS
+      LAYER li1 ;
+        RECT 5.520 10.795 94.300 87.125 ;
+      LAYER met1 ;
+        RECT 0.070 10.640 96.990 87.280 ;
+      LAYER met2 ;
+        RECT 0.100 95.720 9.470 96.000 ;
+        RECT 10.310 95.720 25.570 96.000 ;
+        RECT 26.410 95.720 44.890 96.000 ;
+        RECT 45.730 95.720 60.990 96.000 ;
+        RECT 61.830 95.720 80.310 96.000 ;
+        RECT 81.150 95.720 96.410 96.000 ;
+        RECT 0.100 4.280 96.960 95.720 ;
+        RECT 0.650 4.000 15.910 4.280 ;
+        RECT 16.750 4.000 35.230 4.280 ;
+        RECT 36.070 4.000 51.330 4.280 ;
+        RECT 52.170 4.000 70.650 4.280 ;
+        RECT 71.490 4.000 86.750 4.280 ;
+        RECT 87.590 4.000 96.960 4.280 ;
+      LAYER met3 ;
+        RECT 4.400 91.440 96.000 92.290 ;
+        RECT 3.990 82.640 96.000 91.440 ;
+        RECT 3.990 81.240 95.600 82.640 ;
+        RECT 3.990 75.840 96.000 81.240 ;
+        RECT 4.400 74.440 96.000 75.840 ;
+        RECT 3.990 62.240 96.000 74.440 ;
+        RECT 3.990 60.840 95.600 62.240 ;
+        RECT 3.990 55.440 96.000 60.840 ;
+        RECT 4.400 54.040 96.000 55.440 ;
+        RECT 3.990 45.240 96.000 54.040 ;
+        RECT 3.990 43.840 95.600 45.240 ;
+        RECT 3.990 38.440 96.000 43.840 ;
+        RECT 4.400 37.040 96.000 38.440 ;
+        RECT 3.990 24.840 96.000 37.040 ;
+        RECT 3.990 23.440 95.600 24.840 ;
+        RECT 3.990 18.040 96.000 23.440 ;
+        RECT 4.400 16.640 96.000 18.040 ;
+        RECT 3.990 7.840 96.000 16.640 ;
+        RECT 3.990 6.975 95.600 7.840 ;
+      LAYER met4 ;
+        RECT 58.255 25.335 59.320 50.825 ;
+        RECT 61.720 25.335 71.820 50.825 ;
+        RECT 74.220 25.335 79.745 50.825 ;
+  END
+END solar_energy_manager_top
+END LIBRARY
+
