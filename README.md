@@ -2,7 +2,7 @@
   <img src="Screenshots/banner.png" alt="Solar-Powered Device Energy Manager banner" width="100%">
 </p>
 
-# Solar-Powered Device Energy Manager Using RTL Design
+# Solar-Powered Device Energy Manager
 
 A synthesizable Verilog controller that manages simulated battery energy by selecting **normal**, **power-save**, and **critical** operating modes. Essential loads remain enabled in every mode, while nonessential loads are disabled outside normal mode. Solar charging is enabled whenever solar power is available and the simulated battery is not full.
 
